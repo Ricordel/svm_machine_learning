@@ -7,6 +7,7 @@ from cvxopt.base import matrix
 
 #Importation des fonctions necessaires
 import numpy, pylab, random, math
+import sys
 from generate_tests import *
 
 
@@ -105,7 +106,7 @@ def find_alphas(P, q, G, h):
 
 
 
-def plotBoundary (classA, classB, indicator):
+def plot_boundary (classA, classB, indicator):
         pylab.hold(True)        
         pylab.plot([p[0] for p in classA], [p[1] for p in classA], 'bo')
         pylab.plot([p[0] for p in classB], [p[1] for p in classB],'ro')
@@ -120,14 +121,12 @@ def plotBoundary (classA, classB, indicator):
 
 
 
-def try_indicator(kernel):
-    # Essai de pickle
-    #generate_data("fresh_data", allow_overwrite=True)
-    classA, classB, data = load_data("fresh_data")
-    #classA, classB, data = generate_data("/tmp/eraseable", True)
+def try_indicator(kernel, dataset_filename):
+    # Récupérer les données dans un fichier
+    classA, classB, data = load_data(dataset_filename)
 
     indicator = learn_indicator(data, kernel)
-    plotBoundary(classA, classB, indicator)
+    plot_boundary(classA, classB, indicator)
 
 
 # Les differents kernels possibles. Un kernel est de prototype
@@ -166,16 +165,20 @@ def sigmoid_kenel(k, delta):
 
 
 if __name__ == "__main__" :
-    #try_indicator(sigmoid_kenel(1, 1))
-    try_indicator(polynomial_kernel(3))
-    #try_indicator(radial_basis_kernel(4))
+    if len(sys.argv) < 2:
+        print("Will generate a new random dataset in /tmp/dataset.dat")
+        dataset_filename = "/tmp/dataset.dat"
+        generate_data(dataset_filename, allow_overwrite=True)
+    else:
+        dataset_filename = sys.argv[1]
 
-# TRUCS A FAIRE:
+    try_indicator(polynomial_kernel(3), dataset_filename)
+    #try_indicator(radial_basis_kernel(4), dataset_filename)
+    #try_indicator(sigmoid_kenel(1, 1), dataset_filename)
+
+
+# Truc peut-être possible:
 #   - essayer de faire du VRAI test, i.e ne donner que la moitié du jeu de données pour
 #     l'entrainement, ajouter les données de test, et tracer l'ensemble sur le graphe.
 #     ça permettrait de voir le sur-apprentissage, et voir comment il évolue avec le degré
 #     du polynome par exemple.
-#   - Une bonne idée pourrait de comparer les différents noyaux et les différentes valeurs
-#     des paramètres de ces noyaux sur les mêmes jeux de données. Comme pour l'instant on
-#     les régénère à chaque fois, c'est possible. Utiliser "pickle" pour tirer des jeux
-#     de données, les sérialiser, les mettre dans des fichiers, puis les réutiliser ici.
