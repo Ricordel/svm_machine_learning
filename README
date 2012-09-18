@@ -14,4 +14,6 @@ Ce que font les fichiers:
                 - on peut lui passer le chemin d'un dataset en argument (typiquement "ds/un_data_set.dat")
                   Si aucun dataset ne lui est passé, il en génère un pour l'occasion dans /tmp, qui sera
                   écrasé la prochaine fois.
+                - on peut aussi passer un 2è argument, qui sera alors interprêté comme la valeur SLACK_CTE
+                  ('C') dans le TP pour les slack variables. Cela force l'utilisation des slack variables.
                 - on peut changer DANS LE CODE "if __name__ == "__main__" " le kernel utilisé.

@@ -6,34 +6,35 @@ from cvxopt.solvers import qp
 from cvxopt.base import matrix
 
 #Importation des fonctions necessaires
-import numpy, pylab, random, math
+import numpy as np
+import pylab, random, math
 import sys
 from generate_tests import *
 
 
 # !!! ATTENTION !!!
 # Numpy a des subtilites discutables entre matrice et array.
-#   - Le type numpy.array ne contient que le nombre de dimensions necessaires. Autrement
+#   - Le type np.array ne contient que le nombre de dimensions necessaires. Autrement
 #     dit, il n'y a aucune discinction entre un vecteur ligne et un vecteur colone: ce sont
-#     deux arrays de dimension 1. Cela implique que le 'dot product' numpy.dot(x, y) sur
-#     des numpy.array est TOUJOURS le produit scalaire, et ne peut PAS produire une grande
+#     deux arrays de dimension 1. Cela implique que le 'dot product' np.dot(x, y) sur
+#     des np.array est TOUJOURS le produit scalaire, et ne peut PAS produire une grande
 #     matrice, même si on essaie d'appeler transpose() sur l'un des arguments. L'avantage
 #     est qu'on ne se fera pas crier dessus parce que les vecteurs ne sont pas dans le bon
 #     sens. Le 'dot product' marche comme un produit de matrice dans le cas ou l'array est
 #     de dimension 2. Je n'ai meme pas envie de penser a ce que ca fait en dimension > 2.
-#     Sur les numpy.array, l'operateur '*' fait une multiplication coordonnee par coordonnee,
+#     Sur les np.array, l'operateur '*' fait une multiplication coordonnee par coordonnee,
 #
-#   - Le type numpy.matrix, en revenche, represente une matrice au sens mathematique (sauf
-#     que la numerotation commence a 0 et pas a 1 a la difference de matlab). Une numpy.matrix a
-#     TOUJOURS deux dimensions. Le 'dot product' (numpy.dot(a, b)) ET l'operation '*' representent
+#   - Le type np.matrix, en revenche, represente une matrice au sens mathematique (sauf
+#     que la numerotation commence a 0 et pas a 1 a la difference de matlab). Une np.matrix a
+#     TOUJOURS deux dimensions. Le 'dot product' (np.dot(a, b)) ET l'operation '*' representent
 #     la multiplication matricielle normale, par ex. le produit de 2 vecteurs produira
 #     soit une grosse matrice soit le produit scalaire selon qu'on multiplie colone par ligne
-#     ou ligne par colone. La transposition sur un vecteur represente par un type numpy.matrix
+#     ou ligne par colone. La transposition sur un vecteur represente par un type np.matrix
 #     a un effet, contrairement aux arrays, la distinction ligne/colone a un sens.
 
 
-# Number of points in the training set
-NB_PTS = 40
+USE_SLACK_VARIABLES = False
+SLACK_CTE = 5 # Le 'C' à faire varier pour étudier l'effet des clack variables
 
 
 # Fonction principale contenant la logique de l'algorithme d'apprentissage des SVM
@@ -43,25 +44,39 @@ NB_PTS = 40
 # Returns: indicator :: point -> classe
 #                       Fonction pouvant servir a classifier un nouvel element:
 def learn_indicator(training_data, kernel):
-    global NB_PTS # Ca, c'est vraiment de la merde pythonesque...
+    nb_pts = len(training_data)
     # On defini les matrices qui serviront a trouver alpha (cf enonce TP).
     # Comme ce TP est cense nous faire utiliser numpy, faisons-en des arrays numpy
     P = def_P(training_data, kernel)
-    q = -numpy.ones(NB_PTS)
-    h = numpy.zeros(NB_PTS)
-    G = -numpy.eye(NB_PTS)
+    q = -np.ones(nb_pts)
+
+    # Si on utilise les slack variables, G et h sont un peu différentes:
+    #   G = | - Id_n |
+    #       | C*Id_n |
+    #   h = | (0) |
+    #       | (C) |
+    if USE_SLACK_VARIABLES:
+        # Cf la doc de numpy pour voir ce qu'est la liste r_. En gros c'est un moyen
+        # malin de concaténer des lignes. Il existe c_ pour concaténer des colones.
+        # Comme on utilise des np.array, la concaténation de colones correspond à
+        # concaténer "les listes les plus extérieures" en ligne, donc r_ marche.
+        h = np.r_[np.zeros(nb_pts), SLACK_CTE * np.ones(nb_pts)]
+        G = np.r_[-np.eye(nb_pts), np.eye(nb_pts)]
+    else:
+        h = np.zeros(nb_pts)
+        G = -np.eye(nb_pts)
 
     # Trouver les alphas solution du probleme d'optimisation
     alphas = find_alphas(P, q, G, h)
-    ts = numpy.array([ech[2] for ech in training_data]) # Classe des différents points (t_i dans l'énoncé)
-    ys = [ numpy.array([e[0], e[1]]) for e in training_data ] # points du training set sans leur classe
+    ts = np.array([ech[2] for ech in training_data]) # Classe des différents points (t_i dans l'énoncé)
+    ys = [ np.array([e[0], e[1]]) for e in training_data ] # points du training set sans leur classe
 
     # Notre fonction indicator a retourner, dependant de alphas et training_data
     # !! Attention, pour faire ça il faut être sûr que alphas, ts, ys ne seront pas modifiés
     # ultérieurement, ce qui est le cas ici. S'ils étaient modifiés, indicator le serait par
     # effet de bord, car Pyton ne gère pas les fermetures.
     def indicator(x):
-        kernel_values = numpy.array([kernel(x, y) for y in ys])
+        kernel_values = np.array([kernel(x, y) for y in ys])
         # Sur des arrays, '*' est la multiplication coordonnee par coordonnee
         return sum(alphas * ts * kernel_values)
 
@@ -71,19 +86,19 @@ def learn_indicator(training_data, kernel):
 # Calcule la matrice P tq P_i,j = t_i * t_j * K(x_i, x_j) pour x_i, x_j se baladant
 # dans les données d'entrainement
 def def_P(training_data, kernel):
-    global NB_PTS
-    P = numpy.zeros((NB_PTS, NB_PTS))
+    nb_pts = len(training_data)
+    P = np.zeros((nb_pts, nb_pts))
     for i, d_i in enumerate(training_data):
         for j, d_j in enumerate(training_data):
             t_i, t_j = d_i[2], d_j[2]
 
             # Kernel prend deux matrices numpy en entree
-            x_i = numpy.array([d_i[0], d_i[1]])
-            x_j = numpy.array([d_j[0], d_j[1]])
+            x_i = np.array([d_i[0], d_i[1]])
+            x_j = np.array([d_j[0], d_j[1]])
 
             P[i, j] = t_i * t_j * kernel(x_i, x_j)
 
-    print("Rang de P: %d" % sum([1 for e in numpy.linalg.eigvals(P) if math.fabs(e) > 10e-5]))
+    print("Rang de P: %d" % sum([1 for e in np.linalg.eigvals(P) if math.fabs(e) > 10e-5]))
     return P
 
 
@@ -94,9 +109,9 @@ def def_P(training_data, kernel):
 def find_alphas(P, q, G, h):
     # Utilisation de cvxopt: cf enonce du TP
     r = qp(matrix(P), matrix(q), matrix(G), matrix(h))
-    alphas = numpy.array(list(r['x']))
+    alphas = np.array(list(r['x']))
     # remplacer les valeurs trop petites par 0, garder le reste
-    alphas = numpy.where(numpy.fabs(alphas) < 10e-5, 0, alphas)
+    alphas = np.where(np.fabs(alphas) < 10e-5, 0, alphas)
 
     return alphas
 
@@ -111,10 +126,10 @@ def plot_boundary (classA, classB, indicator):
         pylab.plot([p[0] for p in classA], [p[1] for p in classA], 'bo')
         pylab.plot([p[0] for p in classB], [p[1] for p in classB],'ro')
        
-        xrange = numpy.arange(-4, 4, 0.05)
-        yrange = numpy.arange(-4, 4, 0.05)
+        xrange = np.arange(-4, 4, 0.05)
+        yrange = np.arange(-4, 4, 0.05)
 
-        grid = matrix([[indicator(numpy.array([x, y])) for y in yrange] for x in xrange])
+        grid = matrix([[indicator(np.array([x, y])) for y in yrange] for x in xrange])
 
         pylab.contour(xrange, yrange, grid, (-1.0, 0.0, 1.0), colors=('red', 'black', 'blue'), linewidths=(1, 3, 1))
         pylab.show()
@@ -143,42 +158,42 @@ def try_indicator(kernel, dataset_filename):
 
 def linear_kernel():
     def kernel(a, b):
-        return numpy.dot(a, b) + 1
+        return np.dot(a, b) + 1
     return kernel
 
 def polynomial_kernel(p):
     def kernel(a, b):
-        return (numpy.dot(a, b) + 1) ** p
+        return (np.dot(a, b) + 1) ** p
     return kernel
 
 def radial_basis_kernel(sigma):
     def kernel(a, b):
         delta = a - b
-        return math.exp( -numpy.dot(delta, delta) / (2 * sigma**2) )
+        return math.exp( -np.dot(delta, delta) / (2 * sigma**2) )
     return kernel
 
 def sigmoid_kenel(k, delta):
     def kernel(a, b):
-        return math.tanh( k*numpy.dot(a, b) - delta )
+        return math.tanh( k*np.dot(a, b) - delta )
     return kernel
 
 
 
 if __name__ == "__main__" :
+    # Dégueu, d'ailleurs il crie, mais marche quand même, donc tant pis
+    global USE_SLACK_VARIABLES
+    global SLACK_CTE
     if len(sys.argv) < 2:
         print("Will generate a new random dataset in /tmp/dataset.dat")
         dataset_filename = "/tmp/dataset.dat"
         generate_data(dataset_filename, allow_overwrite=True)
-    else:
+    else: 
         dataset_filename = sys.argv[1]
+
+        if len(sys.argv) > 2: # the second argument is the value of SLACK_CTE
+            USE_SLACK_VARIABLES = True
+            SLACK_CTE = float(sys.argv[2])
 
     try_indicator(polynomial_kernel(3), dataset_filename)
     #try_indicator(radial_basis_kernel(4), dataset_filename)
     #try_indicator(sigmoid_kenel(1, 1), dataset_filename)
-
-
-# Truc peut-être possible:
-#   - essayer de faire du VRAI test, i.e ne donner que la moitié du jeu de données pour
-#     l'entrainement, ajouter les données de test, et tracer l'ensemble sur le graphe.
-#     ça permettrait de voir le sur-apprentissage, et voir comment il évolue avec le degré
-#     du polynome par exemple.
