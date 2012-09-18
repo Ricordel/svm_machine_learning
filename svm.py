@@ -7,6 +7,7 @@ from cvxopt.base import matrix
 
 #Importation des fonctions necessaires
 import numpy, pylab, random, math
+from generate_tests import *
 
 
 # !!! ATTENTION !!!
@@ -103,28 +104,6 @@ def find_alphas(P, q, G, h):
 ################### Partie concernant le test #####################
 
 
-# Fonction generant des donnees random, utilisables pour l'apprentissage
-def generateData():
-    global NB_PTS
-    # Notre nombre de points doit être divisible par 4
-    if NB_PTS % 4 != 0:
-        new_NB_PTS = math.floor(NB_PTS / 4) * 4
-        print("Nombre de points {0} non divisible par 4, utilisera {1} points".format(NB_PTS, new_NB_PTS))
-        NB_PTS = new_NB_PTS
-
-    # Moitie des elements dans la classe 1 = union de deux gaussiennes
-    classA = [(random.normalvariate(-1.5, 1), random.normalvariate(0.5, 1), 1.0) for i in range(NB_PTS/4)] + \
-             [(random.normalvariate(1.5, 1), random.normalvariate(0.5, 1), 1.0) for i in range(NB_PTS/4)]
-    
-    # Autre moitie dans la classe 2 = une autre gaussienne
-    classB = [(random.normalvariate(0.0, 0.5), random.normalvariate(-0.5, 0.5), -1.0) for i in range (NB_PTS/2)]
-
-    # Joindre les deux liste et melanger (mais pourquoi ??)
-    data = classA + classB
-    random.shuffle(data)
-    return classA, classB, data
-
-        
 
 def plotBoundary (classA, classB, indicator):
         pylab.hold(True)        
@@ -142,7 +121,11 @@ def plotBoundary (classA, classB, indicator):
 
 
 def try_indicator(kernel):
-    classA, classB, data = generateData()
+    # Essai de pickle
+    #generate_data("fresh_data", allow_overwrite=True)
+    classA, classB, data = load_data("fresh_data")
+    #classA, classB, data = generate_data("/tmp/eraseable", True)
+
     indicator = learn_indicator(data, kernel)
     plotBoundary(classA, classB, indicator)
 
@@ -184,8 +167,8 @@ def sigmoid_kenel(k, delta):
 
 if __name__ == "__main__" :
     #try_indicator(sigmoid_kenel(1, 1))
-    #try_indicator(polynomial_kernel(3))
-    try_indicator(radial_basis_kernel(10))
+    try_indicator(polynomial_kernel(3))
+    #try_indicator(radial_basis_kernel(4))
 
 # TRUCS A FAIRE:
 #   - essayer de faire du VRAI test, i.e ne donner que la moitié du jeu de données pour
