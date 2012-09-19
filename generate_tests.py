@@ -30,7 +30,8 @@ def generate_data(out_file_name, allow_overwrite=False):
              [(random.normalvariate(1.5, 1), random.normalvariate(0.5, 1), 1.0) for i in range(nb_pts/4)]
     
     # Autre moitie dans la classe 2 = une autre gaussienne
-    classB = [(random.normalvariate(0.0, 0.5), random.normalvariate(-0.5, 0.5), -1.0) for i in range (nb_pts/2)]
+    #classB = [(random.normalvariate(0.0, 0.5), random.normalvariate(-0.5, 0.5), -1.0) for i in range (nb_pts/2)]
+    classB = [(random.normalvariate(-1.5, 0.5), random.normalvariate(-1.5, 0.5), -1.0) for i in range (nb_pts/2)]
 
     # Joindre les deux liste et melanger (mais pourquoi ??)
     data = classA + classB

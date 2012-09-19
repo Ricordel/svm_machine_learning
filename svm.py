@@ -73,7 +73,7 @@ def learn_indicator(training_data, kernel):
 
     # Notre fonction indicator a retourner, dependant de alphas et training_data
     # !! Attention, pour faire ça il faut être sûr que alphas, ts, ys ne seront pas modifiés
-    # ultérieurement, ce qui est le cas ici. S'ils étaient modifiés, indicator le serait par
+    # ultérieurement (c'est OK ici). S'ils étaient modifiés, indicator le serait par
     # effet de bord, car Pyton ne gère pas les fermetures.
     def indicator(x):
         kernel_values = np.array([kernel(x, y) for y in ys])
@@ -172,7 +172,7 @@ def radial_basis_kernel(sigma):
         return math.exp( -np.dot(delta, delta) / (2 * sigma**2) )
     return kernel
 
-def sigmoid_kenel(k, delta):
+def sigmoid_kernel(k, delta):
     def kernel(a, b):
         return math.tanh( k*np.dot(a, b) - delta )
     return kernel
@@ -194,6 +194,7 @@ if __name__ == "__main__" :
             USE_SLACK_VARIABLES = True
             SLACK_CTE = float(sys.argv[2])
 
-    try_indicator(polynomial_kernel(3), dataset_filename)
-    #try_indicator(radial_basis_kernel(4), dataset_filename)
-    #try_indicator(sigmoid_kenel(1, 1), dataset_filename)
+    #try_indicator(polynomial_kernel(3), dataset_filename)
+    try_indicator(radial_basis_kernel(0.5), dataset_filename)
+    #try_indicator(sigmoid_kernel(100, 0.01), dataset_filename)
+    #try_indicator(linear_kernel(), dataset_filename)
