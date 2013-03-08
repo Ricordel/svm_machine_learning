@@ -52,7 +52,7 @@ def learn_indicator(training_data, kernel):
 
     # Si on utilise les slack variables, G et h sont un peu différentes:
     #   G = | - Id_n |
-    #       | C*Id_n |
+    #       |   Id_n |
     #   h = | (0) |
     #       | (C) |
     if USE_SLACK_VARIABLES:
@@ -68,7 +68,7 @@ def learn_indicator(training_data, kernel):
 
     # Trouver les alphas solution du probleme d'optimisation
     alphas = find_alphas(P, q, G, h)
-    ts = np.array([ech[2] for ech in training_data]) # Classe des différents points (t_i dans l'énoncé)
+    ts = np.array([e[2] for e in training_data]) # Classe des différents points (t_i dans l'énoncé)
     ys = [ np.array([e[0], e[1]]) for e in training_data ] # points du training set sans leur classe
 
     # Notre fonction indicator a retourner, dependant de alphas et training_data
@@ -150,7 +150,7 @@ def try_indicator(kernel, dataset_filename):
 # NB: La plupart kernels sont parametrables, on defini donc plutot des constructeurs
 # de kernels, prenant ces parametres en argument et retournant une fonction
 # respectant le prototype ci-dessus. linear_kernel n'est pas parametrable,
-# mais on en defini quand meme un constructeur pour etre consistant avec le
+# mais on en defini quand meme un constructeur pour etre consistent avec le
 # reste.
 
 def linear_kernel():
@@ -191,7 +191,7 @@ if __name__ == "__main__" :
             USE_SLACK_VARIABLES = True
             SLACK_CTE = float(sys.argv[2])
 
-    #try_indicator(polynomial_kernel(3), dataset_filename)
-    try_indicator(radial_basis_kernel(0.5), dataset_filename)
-    #try_indicator(sigmoid_kernel(100, 0.01), dataset_filename)
+    #try_indicator(polynomial_kernel(10), dataset_filename)
+    #try_indicator(radial_basis_kernel(10), dataset_filename)
     #try_indicator(linear_kernel(), dataset_filename)
+    try_indicator(sigmoid_kernel(1, 1), dataset_filename)
