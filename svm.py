@@ -72,9 +72,6 @@ def learn_indicator(training_data, kernel):
     ys = [ np.array([e[0], e[1]]) for e in training_data ] # points du training set sans leur classe
 
     # Notre fonction indicator a retourner, dependant de alphas et training_data
-    # !! Attention, pour faire ça il faut être sûr que alphas, ts, ys ne seront pas modifiés
-    # ultérieurement (c'est OK ici). S'ils étaient modifiés, indicator le serait par
-    # effet de bord, car Pyton ne gère pas les fermetures.
     def indicator(x):
         kernel_values = np.array([kernel(x, y) for y in ys])
         # Sur des arrays, '*' est la multiplication coordonnee par coordonnee
@@ -104,7 +101,7 @@ def def_P(training_data, kernel):
 
 
 # Utilise cvxopt pour resoudre le probleme (dual) d'optimisation convexe
-# Ne pas oublier qu'on fait du calcul numerique, donc un peu de chimie,
+# Ne pas oublier qu'on fait du calcul flottant, donc un peu de chimie,
 # donc tout nombre < 10e-5 sera considere comme etant nul.
 def find_alphas(P, q, G, h):
     # Utilisation de cvxopt: cf enonce du TP
@@ -180,7 +177,7 @@ def sigmoid_kernel(k, delta):
 
 
 if __name__ == "__main__" :
-    # Dégueu, d'ailleurs il crie, mais marche quand même, donc tant pis
+    # Sale, mais marche quand même, donc tant pis
     global USE_SLACK_VARIABLES
     global SLACK_CTE
     if len(sys.argv) < 2:
