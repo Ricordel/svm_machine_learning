@@ -1,19 +1,15 @@
 Ce que font les fichiers:
     generate_tests.py: génère un nouveau jeu de tests et le place dans le fichier "./fresh_dataset.dat"
-                       qui sera écrasé sans vergogne s'il existe (ce comportement est paramétrable dans
-                       le code du module)
+                       qui sera écrasé s'il existe (ce comportement est paramétrable dans le code du module)
                        On peut aussi (et on va !) modifier la variance et la moyenne des gaussiennes
-                       utilisées pour créer les tests sets. Par exemple essayer d'en trouver un qui
-                       marche avec un kernel linéaire serait plutôt bon.
+                       utilisées pour créer les tests sets.
 
-    show_dataset.py: affiche le dataset (pas la limite apprise par la SVM parce que, ben, il ne l'apprend pas)
-                     passé en premier argument. Envoie chier s'il n'y pas de premier argument
+    show_dataset.py: affiche le dataset (pas la limite apprise par la SVM) passé en premier argument.
 
-    svp.py: fait le travail du TP: apprend la séparation d'un dataset avec la méthode de la SVM.
-            il se paramètre de deux façons (c'est pas propre pq c'est pas unifié toussa...):
+    svn.py: fait le travail du TP: apprend la séparation d'un dataset avec la méthode de la SVM.
+            il se paramètre de deux façons :
                 - on peut lui passer le chemin d'un dataset en argument (typiquement "ds/un_data_set.dat")
-                  Si aucun dataset ne lui est passé, il en génère un pour l'occasion dans /tmp, qui sera
-                  écrasé la prochaine fois.
+                  Si aucun dataset ne lui est passé, il en génère un dans /tmp.
                 - on peut aussi passer un 2è argument, qui sera alors interprêté comme la valeur SLACK_CTE
                   ('C') dans le TP pour les slack variables. Cela force l'utilisation des slack variables.
-                - on peut changer DANS LE CODE "if __name__ == "__main__" " le kernel utilisé.
+                - on peut changer DANS LE CODE "if __name__ == "__main__" le kernel utilisé.
